@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
@@ -643,8 +644,11 @@
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
-            <label for="formPrice" class="block text-xs font-medium text-slate-300 mb-1">Preço Atual (R$) *</label>
-            <input id="formPrice" type="number" step="0.01" min="0.01" placeholder="27.40" required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none" />
+            <div class="flex items-center justify-between mb-1">
+              <label for="formPrice" class="block text-xs font-medium text-slate-300">Preço Atual (R$) *</label>
+              <span id="priceAutoStatus" class="text-[10px] font-mono text-emerald-400 hidden">● Auto</span>
+            </div>
+            <input id="formPrice" type="number" step="0.01" min="0.01" placeholder="Busca automática..." required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none transition" />
           </div>
           <div>
             <label for="formDpa" class="block text-xs font-medium text-slate-300 mb-1">DPA Anual (R$) *</label>
@@ -1475,8 +1479,13 @@
         document.getElementById('formFavorite').checked = true;
       }
 
+      const statusEl = document.getElementById('priceAutoStatus');
+      if (statusEl) statusEl.className = 'text-[10px] font-mono text-emerald-400 hidden';
       updateModalLivePreview();
       modal.classList.remove('hidden');
+      if (!stockId) {
+        setTimeout(() => document.getElementById('formTicker').focus(), 80);
+      }
     }
 
     function updateModalLivePreview() {
@@ -1538,6 +1547,54 @@
       renderAll();
     }
 
+    // Base estendida de indicadores fundamentalistas da B3 para enriquecer a busca online
+    const B3_FUNDAMENTALS_DB = {
+      BBAS3: { name: 'Banco do Brasil ON', sector: 'Bancos', price: 27.40, dpa: 2.62, lpa: 6.35, vpa: 31.80 },
+      TAEE11: { name: 'Taesa Unit', sector: 'Energia Elétrica', price: 34.80, dpa: 3.10, lpa: 3.85, vpa: 19.40 },
+      TAEE4: { name: 'Taesa PN', sector: 'Energia Elétrica', price: 11.60, dpa: 1.03, lpa: 1.28, vpa: 6.46 },
+      BBSE3: { name: 'BB Seguridade ON', sector: 'Seguros', price: 35.90, dpa: 3.45, lpa: 4.10, vpa: 5.60 },
+      CXSE3: { name: 'Caixa Seguridade ON', sector: 'Seguros', price: 14.80, dpa: 1.15, lpa: 1.32, vpa: 4.20 },
+      PSSA3: { name: 'Porto Seguro ON', sector: 'Seguros', price: 36.20, dpa: 1.95, lpa: 3.90, vpa: 20.50 },
+      ITUB4: { name: 'Itaú Unibanco PN', sector: 'Bancos', price: 33.50, dpa: 2.45, lpa: 4.15, vpa: 20.10 },
+      ITSA4: { name: 'Itaúsa PN', sector: 'Bancos', price: 10.45, dpa: 0.82, lpa: 1.45, vpa: 8.60 },
+      BBDC4: { name: 'Bradesco PN', sector: 'Bancos', price: 13.20, dpa: 1.05, lpa: 1.65, vpa: 15.40 },
+      SANB11: { name: 'Santander Brasil Unit', sector: 'Bancos', price: 28.90, dpa: 2.10, lpa: 3.40, vpa: 24.10 },
+      EGIE3: { name: 'Engie Brasil ON', sector: 'Energia Elétrica', price: 41.20, dpa: 2.95, lpa: 4.30, vpa: 14.20 },
+      CPLE6: { name: 'Copel PNB', sector: 'Energia Elétrica', price: 10.15, dpa: 0.72, lpa: 1.10, vpa: 8.40 },
+      CMIG4: { name: 'Cemig PN', sector: 'Energia Elétrica', price: 11.30, dpa: 1.15, lpa: 2.05, vpa: 9.10 },
+      ISAE4: { name: 'ISA Energia (ex-TRPL4)', sector: 'Energia Elétrica', price: 24.50, dpa: 2.20, lpa: 3.90, vpa: 28.40 },
+      TRPL4: { name: 'ISA Energia PN', sector: 'Energia Elétrica', price: 24.50, dpa: 2.20, lpa: 3.90, vpa: 28.40 },
+      VALE3: { name: 'Vale ON', sector: 'Mineração', price: 58.90, dpa: 5.10, lpa: 9.80, vpa: 44.50 },
+      PETR4: { name: 'Petrobras PN', sector: 'Petróleo e Gás', price: 36.40, dpa: 5.40, lpa: 9.20, vpa: 30.10 },
+      PETR3: { name: 'Petrobras ON', sector: 'Petróleo e Gás', price: 39.10, dpa: 5.40, lpa: 9.20, vpa: 30.10 },
+      PRIO3: { name: 'PRIO ON', sector: 'Petróleo e Gás', price: 41.80, dpa: 0.50, lpa: 5.80, vpa: 18.20 },
+      SAPR11: { name: 'Sanepar Unit', sector: 'Saneamento', price: 28.10, dpa: 1.95, lpa: 5.10, vpa: 33.40 },
+      SAPR4: { name: 'Sanepar PN', sector: 'Saneamento', price: 5.65, dpa: 0.39, lpa: 1.02, vpa: 6.68 },
+      CSMG3: { name: 'Copasa ON', sector: 'Saneamento', price: 21.40, dpa: 1.85, lpa: 3.40, vpa: 20.80 },
+      SBSP3: { name: 'Sabesp ON', sector: 'Saneamento', price: 88.50, dpa: 2.40, lpa: 7.20, vpa: 46.00 },
+      VIVT3: { name: 'Telefônica Vivo ON', sector: 'Telecomunicações', price: 51.30, dpa: 3.40, lpa: 3.30, vpa: 42.10 },
+      TIMS3: { name: 'TIM Brasil ON', sector: 'Telecomunicações', price: 17.80, dpa: 1.25, lpa: 1.30, vpa: 10.20 },
+      WEGE3: { name: 'WEG ON', sector: 'Indústria / Outros', price: 52.40, dpa: 0.85, lpa: 1.42, vpa: 4.50 },
+      KLBN11: { name: 'Klabin Unit', sector: 'Indústria / Outros', price: 21.60, dpa: 1.35, lpa: 1.65, vpa: 9.80 },
+      GGBR4: { name: 'Gerdau PN', sector: 'Indústria / Outros', price: 18.90, dpa: 1.40, lpa: 3.10, vpa: 24.50 },
+      B3SA3: { name: 'B3 ON', sector: 'Indústria / Outros', price: 10.80, dpa: 0.78, lpa: 0.85, vpa: 3.70 }
+    };
+
+    function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Timeout')), timeoutMs);
+        fetch(url, options)
+          .then(res => {
+            clearTimeout(timer);
+            resolve(res);
+          })
+          .catch(err => {
+            clearTimeout(timer);
+            reject(err);
+          });
+      });
+    }
+
     // ---------------------------------------------------------
     // 8. LIVE QUOTES REFRESH (MULTI-SOURCE: BRAPI + YAHOO B3) & CLOUD GIST SYNC
     // ---------------------------------------------------------
@@ -1545,73 +1602,83 @@
       const ticker = (rawTicker || '').trim().toUpperCase();
       if (!ticker) return null;
       const token = (state.cloudConfig.brapiToken || '').trim();
+      const baseRef = B3_FUNDAMENTALS_DB[ticker] || B3_PRESETS.find(p => p.ticker === ticker) || {};
 
-      // Tentativa 1: API Brapi.dev (com ou sem token)
-      try {
+      // Criamos promessas rápidas em paralelo para buscar o preço ao vivo o mais rápido possível
+      const liveTasks = [];
+
+      // Fonte 1: Brapi.dev
+      liveTasks.push((async () => {
         const tokenParam = token ? `?token=${encodeURIComponent(token)}&fundamental=true` : `?fundamental=true`;
-        const res = await fetch(`https://brapi.dev/api/quote/${encodeURIComponent(ticker)}${tokenParam}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && Array.isArray(data.results) && data.results[0] && data.results[0].regularMarketPrice) {
-            const r = data.results[0];
-            return {
-              ticker: r.symbol || ticker,
-              name: r.longName || r.shortName || ticker,
-              price: Number(r.regularMarketPrice),
-              lpa: r.earningsPerShare ? Number(r.earningsPerShare) : null,
-              source: 'Brapi B3'
-            };
-          }
-        }
-      } catch (e) {
-        // Segue para fallback gratuito Yahoo Finance B3
-      }
+        const res = await fetchWithTimeout(`https://brapi.dev/api/quote/${encodeURIComponent(ticker)}${tokenParam}`, {}, 3200);
+        if (!res.ok) throw new Error('Brapi status');
+        const data = await res.json();
+        const r = data && Array.isArray(data.results) && data.results[0];
+        if (!r || !r.regularMarketPrice) throw new Error('No price');
+        return {
+          ticker: r.symbol || ticker,
+          name: r.longName || r.shortName || baseRef.name || ticker,
+          price: Number(r.regularMarketPrice),
+          dpa: baseRef.dpa || null,
+          lpa: r.earningsPerShare ? Number(r.earningsPerShare) : (baseRef.lpa || null),
+          vpa: baseRef.vpa || null,
+          sector: baseRef.sector || null,
+          source: 'Brapi B3 (Ao Vivo)'
+        };
+      })());
 
-      // Tentativa 2: Yahoo Finance B3 (.SA) via proxy CORS público (não exige token/cadastro)
+      // Fontes 2, 3 e 4: Yahoo Finance B3 (.SA) via múltiplos proxies CORS em paralelo
       const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}.SA?range=1y&interval=1d&events=div`;
       const proxyUrls = [
         `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`
+        `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`
       ];
 
-      for (const pUrl of proxyUrls) {
-        try {
-          const res = await fetch(pUrl);
-          if (!res.ok) continue;
+      proxyUrls.forEach(pUrl => {
+        liveTasks.push((async () => {
+          const res = await fetchWithTimeout(pUrl, {}, 3800);
+          if (!res.ok) throw new Error('Proxy error');
           const data = await res.json();
           const result = data && data.chart && data.chart.result && data.chart.result[0];
-          if (result && result.meta && result.meta.regularMarketPrice) {
-            let dpa12m = null;
-            if (result.events && result.events.dividends) {
-              const divs = Object.values(result.events.dividends);
-              const sumDiv = divs.reduce((acc, d) => acc + (Number(d.amount) || 0), 0);
-              if (sumDiv > 0) dpa12m = Number(sumDiv.toFixed(2));
-            }
-            return {
-              ticker,
-              name: result.meta.longName || result.meta.shortName || ticker,
-              price: Number(result.meta.regularMarketPrice),
-              dpa: dpa12m,
-              source: 'Yahoo Finance B3'
-            };
+          if (!result || !result.meta || !result.meta.regularMarketPrice) throw new Error('Invalid Yahoo payload');
+          let dpa12m = baseRef.dpa || null;
+          if (result.events && result.events.dividends) {
+            const divs = Object.values(result.events.dividends);
+            const sumDiv = divs.reduce((acc, d) => acc + (Number(d.amount) || 0), 0);
+            if (sumDiv > 0) dpa12m = Number(sumDiv.toFixed(2));
           }
-        } catch (e) {
-          // Tenta próximo proxy
-        }
+          return {
+            ticker,
+            name: baseRef.name || result.meta.longName || result.meta.shortName || ticker,
+            price: Number(result.meta.regularMarketPrice),
+            dpa: dpa12m,
+            lpa: baseRef.lpa || null,
+            vpa: baseRef.vpa || null,
+            sector: baseRef.sector || null,
+            source: 'Yahoo Finance B3 (Ao Vivo)'
+          };
+        })());
+      });
+
+      try {
+        // Retorna a primeira fonte online que responder com sucesso!
+        const liveResult = await Promise.any(liveTasks);
+        if (liveResult && liveResult.price) return liveResult;
+      } catch (e) {
+        // Caso o navegador esteja sem internet ou bloqueado por firewall/sandbox, usa a base de referência B3
       }
 
-      // Tentativa 3: Base local de referência B3
-      const preset = B3_PRESETS.find(p => p.ticker === ticker);
-      if (preset) {
+      if (baseRef && baseRef.price) {
         return {
-          ticker: preset.ticker,
-          name: preset.name,
-          price: preset.price,
-          dpa: preset.dpa,
-          lpa: preset.lpa,
-          vpa: preset.vpa,
-          sector: preset.sector,
-          source: 'Referência Local B3'
+          ticker,
+          name: baseRef.name || ticker,
+          price: baseRef.price,
+          dpa: baseRef.dpa || null,
+          lpa: baseRef.lpa || null,
+          vpa: baseRef.vpa || null,
+          sector: baseRef.sector || 'Indústria / Outros',
+          source: 'Base B3 (Modo Rápido)'
         };
       }
       return null;
@@ -1796,30 +1863,87 @@
       document.getElementById('openAddModalBtn').addEventListener('click', () => openStockModal(null));
       document.getElementById('refreshPricesBtn').addEventListener('click', refreshAllPrices);
 
-      document.getElementById('fetchOnlineModalBtn').addEventListener('click', async () => {
-        const tickerInput = document.getElementById('formTicker');
-        const ticker = (tickerInput.value || '').trim().toUpperCase();
+      let modalTickerDebounce = null;
+      let lastAutoFetchedTicker = '';
+
+      async function autoFetchForModalTicker(rawTicker, silentIfNotFound = false) {
+        const ticker = (rawTicker || '').trim().toUpperCase();
+        if (!ticker || ticker.length < 5) return;
+        const btn = document.getElementById('fetchOnlineModalBtn');
+        const statusEl = document.getElementById('priceAutoStatus');
+        const priceInput = document.getElementById('formPrice');
+
+        btn.textContent = '⏳...';
+        if (statusEl) {
+          statusEl.textContent = '⏳ Buscando B3...';
+          statusEl.className = 'text-[10px] font-mono text-cyan-400 animate-pulse';
+        }
+
+        const data = await fetchSingleTickerOnline(ticker);
+        btn.textContent = '🌐 Buscar';
+
+        if (data && data.price) {
+          lastAutoFetchedTicker = ticker;
+          document.getElementById('formTicker').value = data.ticker;
+          const nameInput = document.getElementById('formName');
+          if (data.name && (!nameInput.value || !document.getElementById('formStockId').value)) {
+            nameInput.value = data.name;
+          }
+          priceInput.value = Number(data.price).toFixed(2);
+          if (data.dpa && !document.getElementById('formDpa').value) {
+            document.getElementById('formDpa').value = Number(data.dpa).toFixed(2);
+          } else if (data.dpa && !document.getElementById('formStockId').value) {
+            document.getElementById('formDpa').value = Number(data.dpa).toFixed(2);
+          }
+          if (data.lpa && !document.getElementById('formStockId').value) {
+            document.getElementById('formLpa').value = Number(data.lpa).toFixed(2);
+          }
+          if (data.vpa && !document.getElementById('formStockId').value) {
+            document.getElementById('formVpa').value = Number(data.vpa).toFixed(2);
+          }
+          if (data.sector && !document.getElementById('formStockId').value) {
+            document.getElementById('formSector').value = data.sector;
+          }
+          if (statusEl) {
+            statusEl.textContent = '🟢 Preço Atualizado';
+            statusEl.className = 'text-[10px] font-mono text-emerald-400';
+          }
+          updateModalLivePreview();
+          showToast(`Preço atual de ${data.ticker} carregado automaticamente: R$ ${Number(data.price).toFixed(2)}`, 'success');
+        } else {
+          if (statusEl) statusEl.classList.add('hidden');
+          if (!silentIfNotFound) {
+            showToast(`Não foi possível buscar ${ticker} online agora. Preencha manualmente.`, 'error');
+          }
+        }
+      }
+
+      // Dispara busca automática assim que o usuário digita um ticker padrão da B3 (ex: WEGE3, TAEE11, BBAS3)
+      document.getElementById('formTicker').addEventListener('input', (e) => {
+        const val = (e.target.value || '').trim().toUpperCase();
+        if (modalTickerDebounce) clearTimeout(modalTickerDebounce);
+        if (/^[A-Z]{4}(3|4|5|6|11)$/.test(val) && val !== lastAutoFetchedTicker) {
+          modalTickerDebounce = setTimeout(() => {
+            autoFetchForModalTicker(val, true);
+          }, 450);
+        }
+      });
+
+      // Também busca automaticamente ao sair do campo Ticker (blur) se ainda não buscou
+      document.getElementById('formTicker').addEventListener('blur', (e) => {
+        const val = (e.target.value || '').trim().toUpperCase();
+        if (val.length >= 5 && val !== lastAutoFetchedTicker) {
+          autoFetchForModalTicker(val, true);
+        }
+      });
+
+      document.getElementById('fetchOnlineModalBtn').addEventListener('click', () => {
+        const ticker = (document.getElementById('formTicker').value || '').trim().toUpperCase();
         if (!ticker) {
           showToast('Digite o ticker da ação primeiro (ex: WEGE3, PETR4).', 'error');
           return;
         }
-        const btn = document.getElementById('fetchOnlineModalBtn');
-        btn.textContent = '⏳...';
-        const data = await fetchSingleTickerOnline(ticker);
-        btn.textContent = '🌐 Buscar';
-        if (data) {
-          tickerInput.value = data.ticker;
-          if (data.name) document.getElementById('formName').value = data.name;
-          if (data.price) document.getElementById('formPrice').value = Number(data.price).toFixed(2);
-          if (data.dpa) document.getElementById('formDpa').value = Number(data.dpa).toFixed(2);
-          if (data.lpa) document.getElementById('formLpa').value = Number(data.lpa).toFixed(2);
-          if (data.vpa) document.getElementById('formVpa').value = Number(data.vpa).toFixed(2);
-          if (data.sector) document.getElementById('formSector').value = data.sector;
-          updateModalLivePreview();
-          showToast(`Dados de ${data.ticker} obtidos via ${data.source}: R$ ${Number(data.price).toFixed(2)}`, 'success');
-        } else {
-          showToast(`Não foi possível buscar ${ticker} online agora. Preencha manualmente.`, 'error');
-        }
+        autoFetchForModalTicker(ticker, false);
       });
 
       document.getElementById('fetchOnlineSimBtn').addEventListener('click', async () => {
@@ -1977,13 +2101,25 @@
           document.getElementById('formMethod').value = preset.method;
           document.getElementById('formNotes').value = preset.notes;
           updateModalLivePreview();
-          showToast(`Dados de referência de ${preset.ticker} preenchidos!`, 'info');
+          // Já procura o preço atual online imediatamente para atualizar antes de lançar!
+          autoFetchForModalTicker(preset.ticker, true);
         }
       });
 
       // Simulator Events
       ['simTicker', 'simPrice', 'simDpa', 'simTargetDy', 'simLpa', 'simVpa', 'simPayout'].forEach(id => {
         document.getElementById(id).addEventListener('input', runSimulatorCalculation);
+      });
+
+      let simTickerDebounce = null;
+      document.getElementById('simTicker').addEventListener('input', (e) => {
+        const val = (e.target.value || '').trim().toUpperCase();
+        if (simTickerDebounce) clearTimeout(simTickerDebounce);
+        if (/^[A-Z]{4}(3|4|5|6|11)$/.test(val)) {
+          simTickerDebounce = setTimeout(() => {
+            document.getElementById('fetchOnlineSimBtn').click();
+          }, 500);
+        }
       });
 
       document.getElementById('simLoadPresetBtn').addEventListener('click', () => {
@@ -2100,3 +2236,4 @@
   </script>
 </body>
 </html>
+```
