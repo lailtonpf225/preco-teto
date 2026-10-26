@@ -391,7 +391,7 @@
                   <th class="py-3.5 px-4 text-center w-10">★</th>
                   <th class="py-3.5 px-4">Ativo / Setor</th>
                   <th class="py-3.5 px-4 text-right">Cotação Atual</th>
-                  <th class="py-3.5 px-4 text-right">DPA (R$) / DY Atual</th>
+                  <th class="py-3.5 px-4 text-right">DPA: Média 5A vs 12M</th>
                   <th class="py-3.5 px-4 text-right">Teto Bazin</th>
                   <th class="py-3.5 px-4 text-right">Teto Graham</th>
                   <th class="py-3.5 px-4 text-right">Meu Preço Teto</th>
@@ -489,15 +489,23 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-3 gap-2.5">
               <div>
-                <label for="simDpa" class="block text-xs font-medium text-slate-400 mb-1">DPA Médio/Proj. (R$/ação)</label>
-                <input id="simDpa" type="number" step="0.01" value="2.60" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono" />
+                <label for="simDpa" class="block text-[11px] font-medium text-emerald-400 mb-1">DPA Médio 5A (R$)</label>
+                <input id="simDpa" type="number" step="0.01" value="2.28" class="w-full bg-slate-900 border border-emerald-500/40 rounded-xl px-3 py-2 text-sm text-white font-mono" />
               </div>
               <div>
-                <label for="simTargetDy" class="block text-xs font-medium text-slate-400 mb-1">DY Mínimo Desejado (%)</label>
+                <label for="simDpa12m" class="block text-[11px] font-medium text-amber-400 mb-1">DPA Últ. 12M (R$)</label>
+                <input id="simDpa12m" type="number" step="0.01" value="2.62" class="w-full bg-slate-900 border border-amber-500/40 rounded-xl px-3 py-2 text-sm text-white font-mono" />
+              </div>
+              <div>
+                <label for="simTargetDy" class="block text-[11px] font-medium text-slate-400 mb-1">Meta DY (%)</label>
                 <input id="simTargetDy" type="number" step="0.5" value="6.0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-emerald-400 font-mono font-bold" />
               </div>
+            </div>
+            <div id="simDpaComparisonBanner" class="bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-2 text-xs flex items-center justify-between">
+              <span class="text-slate-400">Comparação 12M vs. Média 5 Anos:</span>
+              <span id="simDpaDiffBadge" class="font-mono font-semibold text-emerald-400">⚖️ Estável (+14,9%)</span>
             </div>
 
             <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
@@ -557,9 +565,10 @@
                   <thead>
                     <tr class="border-b border-slate-800 text-slate-400 text-[11px] uppercase">
                       <th class="py-2 px-3">Yield Desejado</th>
-                      <th class="py-2 px-3 text-right">Preço Teto Bazin</th>
-                      <th class="py-2 px-3 text-right">Preço Teto Projetivo</th>
-                      <th class="py-2 px-3 text-right">Situação vs Cotação Atual</th>
+                      <th class="py-2 px-3 text-right">Teto Bazin (Média 5A)</th>
+                      <th class="py-2 px-3 text-right">Teto Bazin (Últ. 12M)</th>
+                      <th class="py-2 px-3 text-right">Teto Projetivo</th>
+                      <th class="py-2 px-3 text-right">Situação (Base 5A)</th>
                     </tr>
                   </thead>
                   <tbody id="simSensitivityBody" class="divide-y divide-slate-800/60 font-mono">
@@ -641,17 +650,24 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label for="formPrice" class="block text-xs font-medium text-slate-300">Preço Atual (R$) *</label>
+              <label for="formPrice" class="block text-xs font-medium text-slate-300">Preço Atual *</label>
               <span id="priceAutoStatus" class="text-[10px] font-mono text-emerald-400 hidden">● Auto</span>
             </div>
-            <input id="formPrice" type="number" step="0.01" min="0.01" placeholder="Busca automática..." required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none transition" />
+            <input id="formPrice" type="number" step="0.01" min="0.01" placeholder="Auto..." required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none transition" />
           </div>
           <div>
-            <label for="formDpa" class="block text-xs font-medium text-slate-300 mb-1">DPA Anual (R$) *</label>
-            <input id="formDpa" type="number" step="0.01" min="0" placeholder="2.60" required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none" />
+            <div class="flex items-center justify-between mb-1">
+              <label for="formDpa" class="block text-xs font-semibold text-emerald-400">DPA Médio 5A *</label>
+              <button type="button" id="toggle5yCalcBtn" class="text-[10px] text-cyan-400 hover:underline" title="Abrir calculadora de 5 anos ano a ano">5 anos ▾</button>
+            </div>
+            <input id="formDpa" type="number" step="0.01" min="0" placeholder="2.28" required class="w-full bg-slate-900 border border-emerald-500/50 focus:border-emerald-400 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none" />
+          </div>
+          <div>
+            <label for="formDpa12m" class="block text-xs font-semibold text-amber-400 mb-1">DPA Últ. 12M</label>
+            <input id="formDpa12m" type="number" step="0.01" min="0" placeholder="2.62" class="w-full bg-slate-900 border border-amber-500/40 focus:border-amber-400 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none" />
           </div>
           <div>
             <label for="formLpa" class="block text-xs font-medium text-slate-300 mb-1">LPA (R$)</label>
@@ -663,15 +679,46 @@
           </div>
         </div>
 
+        <!-- Calculadora Expansível de Dividendos dos Últimos 5 Anos (Ano a Ano) -->
+        <div id="fiveYearCalcBox" class="hidden bg-slate-950/90 border border-slate-800 rounded-xl p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-cyan-400">📅 Dividendos Pagos por Ano (Últimos 5 Anos) — Calcula o DPA Médio 5A automaticamente:</span>
+            <span id="fiveYearAvgDisplay" class="text-xs font-mono font-bold text-emerald-400">Média: R$ 0,00</span>
+          </div>
+          <div class="grid grid-cols-5 gap-2">
+            <div>
+              <label for="divY1" class="block text-[10px] text-slate-400 font-mono mb-0.5">Ano 1 (2022)</label>
+              <input id="divY1" type="number" step="0.01" min="0" placeholder="0.00" class="div-5y-input w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono" />
+            </div>
+            <div>
+              <label for="divY2" class="block text-[10px] text-slate-400 font-mono mb-0.5">Ano 2 (2023)</label>
+              <input id="divY2" type="number" step="0.01" min="0" placeholder="0.00" class="div-5y-input w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono" />
+            </div>
+            <div>
+              <label for="divY3" class="block text-[10px] text-slate-400 font-mono mb-0.5">Ano 3 (2024)</label>
+              <input id="divY3" type="number" step="0.01" min="0" placeholder="0.00" class="div-5y-input w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono" />
+            </div>
+            <div>
+              <label for="divY4" class="block text-[10px] text-slate-400 font-mono mb-0.5">Ano 4 (2025)</label>
+              <input id="divY4" type="number" step="0.01" min="0" placeholder="0.00" class="div-5y-input w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-mono" />
+            </div>
+            <div>
+              <label for="divY5" class="block text-[10px] text-amber-400 font-mono mb-0.5">Ano 5 / 12M</label>
+              <input id="divY5" type="number" step="0.01" min="0" placeholder="0.00" class="div-5y-input w-full bg-slate-900 border border-amber-500/40 rounded-lg px-2 py-1.5 text-xs text-white font-mono" />
+            </div>
+          </div>
+        </div>
+
         <!-- Method Selection & Target DY -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
           <div>
             <label for="formMethod" class="block text-xs font-medium text-slate-300 mb-1">Regra do Meu Preço Teto</label>
             <select id="formMethod" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-emerald-400 font-semibold outline-none">
-              <option value="BAZIN">Automático — Bazin (DPA ÷ DY)</option>
-              <option value="GRAHAM">Automático — Graham (Com Margem 20%)</option>
-              <option value="AVERAGE">Híbrido — Média Bazin & Graham</option>
-              <option value="MANUAL">Manual — Definir Teto Fixo</option>
+              <option value="BAZIN">Bazin Conservador (DPA Médio 5A ÷ DY)</option>
+              <option value="BAZIN_12M">Bazin Recente (DPA Últ. 12M ÷ DY)</option>
+              <option value="GRAHAM">Graham (Valor Justo c/ Margem 20%)</option>
+              <option value="AVERAGE">Híbrido (Média Bazin 5A & Graham)</option>
+              <option value="MANUAL">Manual (Definir Teto Fixo)</option>
             </select>
           </div>
           <div>
@@ -685,26 +732,36 @@
         </div>
 
         <!-- Live Preview Box inside Modal -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-4">
-            <div>
-              <span class="text-[11px] text-slate-400 block">Teto Bazin Calculado</span>
-              <span id="modalPreviewBazin" class="text-sm font-mono font-bold text-emerald-400">R$ 0,00</span>
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-4">
+              <div>
+                <span class="text-[11px] text-slate-400 block">Teto Bazin (Média 5A)</span>
+                <span id="modalPreviewBazin" class="text-sm font-mono font-bold text-emerald-400">R$ 0,00</span>
+              </div>
+              <div class="border-l border-slate-800 pl-4">
+                <span class="text-[11px] text-slate-400 block">Teto Bazin (Últ. 12M)</span>
+                <span id="modalPreviewBazin12m" class="text-sm font-mono font-bold text-amber-400">R$ 0,00</span>
+              </div>
+              <div class="border-l border-slate-800 pl-4">
+                <span class="text-[11px] text-slate-400 block">Teto Graham (-20%)</span>
+                <span id="modalPreviewGraham" class="text-sm font-mono font-bold text-cyan-400">R$ 0,00</span>
+              </div>
+              <div class="border-l border-slate-800 pl-4">
+                <span class="text-[11px] text-slate-400 block">Meu Preço Teto Final</span>
+                <span id="modalPreviewFinal" class="text-base font-mono font-extrabold text-white">R$ 0,00</span>
+              </div>
             </div>
-            <div class="border-l border-slate-800 pl-4">
-              <span class="text-[11px] text-slate-400 block">Teto Graham (c/ 20% desc.)</span>
-              <span id="modalPreviewGraham" class="text-sm font-mono font-bold text-cyan-400">R$ 0,00</span>
-            </div>
-            <div class="border-l border-slate-800 pl-4">
-              <span class="text-[11px] text-slate-400 block">Preço Teto Final Ativo</span>
-              <span id="modalPreviewFinal" class="text-base font-mono font-extrabold text-white">R$ 0,00</span>
-            </div>
-          </div>
 
-          <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-            <input id="formFavorite" type="checkbox" checked class="w-4 h-4 accent-amber-400 rounded" />
-            <span class="text-xs font-semibold text-amber-400">★ Marcar como Favorita</span>
-          </label>
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input id="formFavorite" type="checkbox" checked class="w-4 h-4 accent-amber-400 rounded" />
+              <span class="text-xs font-semibold text-amber-400">★ Favorita</span>
+            </label>
+          </div>
+          <div id="modalDpaAlertBar" class="text-xs px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between">
+            <span class="text-slate-400">Análise de Dividendos (12M vs. Média 5 Anos):</span>
+            <span id="modalDpaAlertText" class="font-mono font-semibold text-slate-300">—</span>
+          </div>
         </div>
 
         <div>
@@ -835,16 +892,16 @@
     // 1. B3 PRESET DATABASE & DEFAULT PORTFOLIO
     // ---------------------------------------------------------
     const B3_PRESETS = [
-      { ticker: 'BBAS3', name: 'Banco do Brasil', sector: 'Bancos', price: 27.40, dpa: 2.62, lpa: 6.35, vpa: 31.80, targetDy: 6.0, method: 'BAZIN', favorite: true, notes: 'Banco estatal líder no agronegócio, dividendos recorrentes.' },
-      { ticker: 'TAEE11', name: 'Taesa Unit', sector: 'Energia Elétrica', price: 34.80, dpa: 3.10, lpa: 3.85, vpa: 19.40, targetDy: 6.5, method: 'BAZIN', favorite: true, notes: 'Transmissora pura com receitas previsíveis corrigidas por inflação.' },
-      { ticker: 'BBSE3', name: 'BB Seguridade', sector: 'Seguros', price: 35.90, dpa: 3.45, lpa: 4.10, vpa: 5.60, targetDy: 7.0, method: 'BAZIN', favorite: true, notes: 'Forte geração de caixa e payout elevado.' },
-      { ticker: 'ITUB4', name: 'Itaú Unibanco PN', sector: 'Bancos', price: 33.50, dpa: 2.45, lpa: 4.15, vpa: 20.10, targetDy: 6.0, method: 'AVERAGE', favorite: true, notes: 'Maior banco privado da América Latina.' },
-      { ticker: 'EGIE3', name: 'Engie Brasil', sector: 'Energia Elétrica', price: 41.20, dpa: 2.95, lpa: 4.30, vpa: 14.20, targetDy: 6.0, method: 'BAZIN', favorite: true, notes: 'Gestão eficiente em geração e transmissão.' },
-      { ticker: 'VALE3', name: 'Vale ON', sector: 'Mineração', price: 58.90, dpa: 5.10, lpa: 9.80, vpa: 44.50, targetDy: 7.5, method: 'GRAHAM', favorite: false, notes: 'Cíclica, exigir margem de segurança maior.' },
-      { ticker: 'PETR4', name: 'Petrobras PN', sector: 'Petróleo e Gás', price: 36.40, dpa: 5.40, lpa: 9.20, vpa: 30.10, targetDy: 9.0, method: 'BAZIN', favorite: false, notes: 'Exigir DY mínimo maior (9%) pelo risco político e de commodities.' },
-      { ticker: 'SAPR11', name: 'Sanepar Unit', sector: 'Saneamento', price: 28.10, dpa: 1.95, lpa: 5.10, vpa: 33.40, targetDy: 6.0, method: 'GRAHAM', favorite: true, notes: 'Negociando com forte desconto patrimonial.' },
-      { ticker: 'CPLE6', name: 'Copel PNB', sector: 'Energia Elétrica', price: 10.15, dpa: 0.72, lpa: 1.10, vpa: 8.40, targetDy: 6.0, method: 'BAZIN', favorite: false, notes: 'Elétrica privatizada com foco em eficiência operacional.' },
-      { ticker: 'VIVT3', name: 'Telefônica Vivo', sector: 'Telecomunicações', price: 51.30, dpa: 3.40, lpa: 3.30, vpa: 42.10, targetDy: 6.0, method: 'BAZIN', favorite: false, notes: 'Defensiva e forte geradora de caixa.' }
+      { ticker: 'BBAS3', name: 'Banco do Brasil', sector: 'Bancos', price: 27.40, dpa: 2.28, dpa12m: 2.62, divs5y: [1.65, 2.10, 2.38, 2.65, 2.62], lpa: 6.35, vpa: 31.80, targetDy: 6.0, method: 'BAZIN', favorite: true, notes: 'Lucros crescentes nos últimos 5 anos; DPA 12M acima da média histórica.' },
+      { ticker: 'TAEE11', name: 'Taesa Unit', sector: 'Energia Elétrica', price: 34.80, dpa: 3.65, dpa12m: 2.85, divs5y: [4.55, 4.80, 3.35, 2.70, 2.85], lpa: 3.85, vpa: 19.40, targetDy: 6.5, method: 'BAZIN', favorite: true, notes: 'Pagou dividendos extraordinários em 2022/23; 12M mais moderado por investimentos.' },
+      { ticker: 'BBSE3', name: 'BB Seguridade', sector: 'Seguros', price: 35.90, dpa: 2.92, dpa12m: 3.55, divs5y: [1.85, 2.60, 3.20, 3.40, 3.55], lpa: 4.10, vpa: 5.60, targetDy: 7.0, method: 'BAZIN', favorite: true, notes: 'Dividendos últimos 12M em patamar recorde (+21% acima da média de 5 anos).' },
+      { ticker: 'ITUB4', name: 'Itaú Unibanco PN', sector: 'Bancos', price: 33.50, dpa: 1.95, dpa12m: 2.48, divs5y: [1.10, 1.45, 2.15, 2.57, 2.48], lpa: 4.15, vpa: 20.10, targetDy: 6.0, method: 'AVERAGE', favorite: true, notes: 'Aumento forte de payout nos últimos 12M comparado ao início do ciclo de 5 anos.' },
+      { ticker: 'EGIE3', name: 'Engie Brasil', sector: 'Energia Elétrica', price: 41.20, dpa: 2.78, dpa12m: 2.90, divs5y: [2.45, 2.70, 2.95, 2.90, 2.90], lpa: 4.30, vpa: 14.20, targetDy: 6.0, method: 'BAZIN', favorite: true, notes: 'Alta estabilidade entre a média de 5 anos e os últimos 12 meses.' },
+      { ticker: 'VALE3', name: 'Vale ON', sector: 'Mineração', price: 58.90, dpa: 6.80, dpa12m: 4.65, divs5y: [10.50, 7.60, 6.10, 5.15, 4.65], lpa: 9.80, vpa: 44.50, targetDy: 7.5, method: 'GRAHAM', favorite: false, notes: 'Cíclica: média 5A inflada pelo superciclo do minério; 12M bem menor (-31%).' },
+      { ticker: 'PETR4', name: 'Petrobras PN', sector: 'Petróleo e Gás', price: 36.40, dpa: 8.50, dpa12m: 5.40, divs5y: [13.20, 11.40, 7.30, 5.20, 5.40], lpa: 9.20, vpa: 30.10, targetDy: 9.0, method: 'BAZIN', favorite: false, notes: 'Média 5A reflete dividendos recordes de 2022/23; 12M atual mais normalizado.' },
+      { ticker: 'SAPR11', name: 'Sanepar Unit', sector: 'Saneamento', price: 28.10, dpa: 1.78, dpa12m: 1.95, divs5y: [1.45, 1.65, 1.85, 2.00, 1.95], lpa: 5.10, vpa: 33.40, targetDy: 6.0, method: 'GRAHAM', favorite: true, notes: 'Crescimento consistente e gradual dos proventos.' },
+      { ticker: 'CMIG4', name: 'Cemig PN', sector: 'Energia Elétrica', price: 11.30, dpa: 0.96, dpa12m: 1.42, divs5y: [0.68, 0.82, 0.90, 0.98, 1.42], lpa: 2.05, vpa: 9.10, targetDy: 6.5, method: 'BAZIN', favorite: true, notes: 'Dividendos 12M excepcionalmente altos (+47% vs 5A) por ganhos não recorrentes.' },
+      { ticker: 'VIVT3', name: 'Telefônica Vivo', sector: 'Telecomunicações', price: 51.30, dpa: 3.32, dpa12m: 3.45, divs5y: [3.10, 3.25, 3.40, 3.40, 3.45], lpa: 3.30, vpa: 42.10, targetDy: 6.0, method: 'BAZIN', favorite: false, notes: 'Vaca leiteira com distribuição super previsível nos 5 anos.' }
     ];
 
     const STORAGE_KEYS = {
@@ -946,22 +1003,27 @@
     // ---------------------------------------------------------
     function calculateMetrics(stock) {
       const price = Math.max(0.01, Number(stock.price) || 0.01);
-      const dpa = Math.max(0, Number(stock.dpa) || 0);
+      const dpa5y = Math.max(0, Number(stock.dpa) || 0);
+      const dpa12m = stock.dpa12m !== undefined && stock.dpa12m !== null && Number(stock.dpa12m) > 0
+        ? Math.max(0, Number(stock.dpa12m))
+        : dpa5y;
       const lpa = Math.max(0, Number(stock.lpa) || 0);
       const vpa = Math.max(0, Number(stock.vpa) || 0);
       const targetDy = Math.max(0.5, Number(stock.targetDy) || state.globalDy || 6.0);
 
-      // 1. Bazin Ceiling: DPA / (Target DY / 100)
-      const bazinCeiling = dpa > 0 ? dpa / (targetDy / 100) : 0;
+      // 1. Bazin Ceiling (5-Year Average vs Last 12 Months)
+      const bazinCeiling = dpa5y > 0 ? dpa5y / (targetDy / 100) : 0;
+      const bazin12mCeiling = dpa12m > 0 ? dpa12m / (targetDy / 100) : 0;
 
       // 2. Graham Intrinsic Value: sqrt(22.5 * LPA * VPA)
       const grahamIntrinsic = (lpa > 0 && vpa > 0) ? Math.sqrt(22.5 * lpa * vpa) : 0;
-      // Graham Ceiling with 20% safety discount
       const grahamCeiling = grahamIntrinsic > 0 ? grahamIntrinsic * 0.80 : 0;
 
       // 3. Active Ceiling Price based on user's chosen method
       let finalCeiling = bazinCeiling;
-      if (stock.method === 'GRAHAM' && grahamCeiling > 0) {
+      if (stock.method === 'BAZIN_12M' && bazin12mCeiling > 0) {
+        finalCeiling = bazin12mCeiling;
+      } else if (stock.method === 'GRAHAM' && grahamCeiling > 0) {
         finalCeiling = grahamCeiling;
       } else if (stock.method === 'AVERAGE') {
         if (bazinCeiling > 0 && grahamCeiling > 0) {
@@ -973,27 +1035,39 @@
         finalCeiling = Number(stock.manualCeiling);
       }
 
-      // 4. Current Dividend Yield (%)
-      const currentDy = (dpa / price) * 100;
+      // 4. Dividend Yields (5Y Average vs 12M Recent)
+      const currentDy = (dpa5y / price) * 100;
+      const currentDy12m = (dpa12m / price) * 100;
 
-      // 5. Safety Margin (%) = ((Ceiling - Price) / Ceiling) * 100
-      // Positive means current price is BELOW ceiling (Buy opportunity)
+      // 5. DPA Distortion / Anomaly Analysis (12M vs 5Y Average)
+      const dpaDiffPct = dpa5y > 0 ? ((dpa12m - dpa5y) / dpa5y) * 100 : 0;
+      let dpaAnomaly = 'NORMAL';
+      if (dpaDiffPct >= 18) dpaAnomaly = 'HIGH'; // 12M excepcionalmente alto vs 5 anos
+      else if (dpaDiffPct <= -18) dpaAnomaly = 'LOW'; // 12M excepcionalmente baixo vs 5 anos
+
+      // 6. Safety Margin (%) = ((Ceiling - Price) / Ceiling) * 100
       const marginPct = finalCeiling > 0 ? ((finalCeiling - price) / finalCeiling) * 100 : -100;
 
-      // 6. Status classification
-      let status = 'WAIT'; // Acima do teto
+      // 7. Status classification
+      let status = 'WAIT';
       if (price <= finalCeiling) {
-        status = 'BUY'; // Abaixo do teto
+        status = 'BUY';
       } else if (price <= finalCeiling * 1.05) {
-        status = 'NEAR'; // Até 5% acima do teto
+        status = 'NEAR';
       }
 
       return {
+        dpa5y,
+        dpa12m,
+        dpaDiffPct,
+        dpaAnomaly,
         bazinCeiling,
+        bazin12mCeiling,
         grahamIntrinsic,
         grahamCeiling,
         finalCeiling,
         currentDy,
+        currentDy12m,
         marginPct,
         status
       };
@@ -1006,7 +1080,16 @@
       // Load saved portfolio or initialize with B3 presets
       const savedStocks = safeGetStorage(STORAGE_KEYS.PORTFOLIO, null);
       if (savedStocks && Array.isArray(savedStocks) && savedStocks.length > 0) {
-        state.stocks = savedStocks;
+        // Migração automática para garantir que todos os ativos tenham dpa (Média 5A) e dpa12m (Últimos 12M)
+        state.stocks = savedStocks.map(st => {
+          const preset = B3_PRESETS.find(p => p.ticker === st.ticker) || B3_FUNDAMENTALS_DB[st.ticker];
+          return {
+            ...st,
+            dpa: st.dpa !== undefined ? Number(st.dpa) : (preset ? preset.dpa : 0),
+            dpa12m: st.dpa12m !== undefined && st.dpa12m !== null ? Number(st.dpa12m) : (preset && preset.dpa12m ? preset.dpa12m : Number(st.dpa || 0)),
+            divs5y: Array.isArray(st.divs5y) ? st.divs5y : (preset && preset.divs5y ? preset.divs5y : null)
+          };
+        });
       } else {
         state.stocks = B3_PRESETS.map((item, idx) => ({
           id: 'stock_' + (idx + 1) + '_' + item.ticker,
@@ -1156,7 +1239,8 @@
       emptyEl.classList.add('hidden');
 
       const methodLabels = {
-        BAZIN: 'Bazin',
+        BAZIN: 'Bazin 5A',
+        BAZIN_12M: 'Bazin 12M',
         GRAHAM: 'Graham',
         AVERAGE: 'Média B+G',
         MANUAL: 'Fixo'
@@ -1223,16 +1307,33 @@
               </div>
             </td>
 
-            <!-- DPA & Current DY -->
+            <!-- DPA 5Y vs 12M & Anomaly Badge -->
             <td class="py-3.5 px-4 text-right font-mono">
-              <div class="text-white font-medium">${formatBRL(item.dpa)}</div>
-              <div class="text-xs text-purple-400">DY: ${formatPct(m.currentDy)}</div>
+              <div class="flex items-center justify-end gap-1.5">
+                <span class="text-[10px] text-slate-400">5A:</span>
+                <span class="text-white font-bold">${formatBRL(m.dpa5y)}</span>
+                <span class="text-[10px] text-emerald-400">(${formatPct(m.currentDy)})</span>
+              </div>
+              <div class="flex items-center justify-end gap-1.5 mt-0.5">
+                <span class="text-[10px] text-slate-400">12M:</span>
+                <span class="text-xs text-slate-300">${formatBRL(m.dpa12m)}</span>
+                <span class="text-[10px] text-purple-400">(${formatPct(m.currentDy12m)})</span>
+              </div>
+              <div class="mt-1">
+                ${m.dpaAnomaly === 'HIGH'
+                  ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30" title="Dividendo dos últimos 12M está excepcionalmente alto frente à média de 5 anos">🔥 12M Alto (+${formatPct(m.dpaDiffPct)})</span>`
+                  : m.dpaAnomaly === 'LOW'
+                  ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30" title="Dividendo dos últimos 12M está abaixo da média de 5 anos">❄️ 12M Baixo (${formatPct(m.dpaDiffPct)})</span>`
+                  : `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400" title="Dividendo 12M alinhado à média de 5 anos">⚖️ 12M Estável (${m.dpaDiffPct >= 0 ? '+' : ''}${formatPct(m.dpaDiffPct)})</span>`
+                }
+              </div>
             </td>
 
-            <!-- Bazin Ceiling -->
+            <!-- Bazin Ceiling (5Y vs 12M) -->
             <td class="py-3.5 px-4 text-right font-mono">
-              <div class="text-slate-200">${formatBRL(m.bazinCeiling)}</div>
-              <div class="text-[11px] text-slate-500">Meta ${Number(item.targetDy || state.globalDy).toFixed(1)}%</div>
+              <div class="text-slate-100 font-semibold" title="Preço Teto Bazin pela Média de 5 Anos">${formatBRL(m.bazinCeiling)} <span class="text-[10px] text-emerald-400">5A</span></div>
+              <div class="text-xs text-amber-300/90 mt-0.5" title="Preço Teto Bazin pelos Últimos 12 Meses">${formatBRL(m.bazin12mCeiling)} <span class="text-[10px] text-amber-400">12M</span></div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Meta ${Number(item.targetDy || state.globalDy).toFixed(1)}%</div>
             </td>
 
             <!-- Graham Ceiling -->
@@ -1388,7 +1489,9 @@
     // ---------------------------------------------------------
     function runSimulatorCalculation() {
       const price = Math.max(0.01, Number(document.getElementById('simPrice').value) || 0.01);
-      const dpa = Math.max(0, Number(document.getElementById('simDpa').value) || 0);
+      const dpa5y = Math.max(0, Number(document.getElementById('simDpa').value) || 0);
+      const dpa12mInput = document.getElementById('simDpa12m');
+      const dpa12m = dpa12mInput && Number(dpa12mInput.value) > 0 ? Number(dpa12mInput.value) : dpa5y;
       const targetDy = Math.max(1, Number(document.getElementById('simTargetDy').value) || 6.0);
       const lpa = Math.max(0, Number(document.getElementById('simLpa').value) || 0);
       const vpa = Math.max(0, Number(document.getElementById('simVpa').value) || 0);
@@ -1396,34 +1499,53 @@
 
       document.getElementById('simPayoutLabel').textContent = `${payout}%`;
 
-      const bazin = dpa / (targetDy / 100);
-      const bazinMargin = bazin > 0 ? ((bazin - price) / bazin) * 100 : 0;
+      const bazin5y = dpa5y / (targetDy / 100);
+      const bazin12m = dpa12m / (targetDy / 100);
+      const bazinMargin = bazin5y > 0 ? ((bazin5y - price) / bazin5y) * 100 : 0;
 
       const graham = (lpa > 0 && vpa > 0) ? Math.sqrt(22.5 * lpa * vpa) : 0;
       const projDpa = lpa * (payout / 100);
       const projCeiling = projDpa / (targetDy / 100);
 
-      document.getElementById('simResultBazin').textContent = formatBRL(bazin);
-      document.getElementById('simResultBazinMargin').textContent = `Margem vs Tela: ${bazinMargin >= 0 ? '+' : ''}${formatPct(bazinMargin)}`;
+      document.getElementById('simResultBazin').textContent = formatBRL(bazin5y);
+      document.getElementById('simResultBazinMargin').textContent = `Teto 12M: ${formatBRL(bazin12m)} | Margem 5A: ${bazinMargin >= 0 ? '+' : ''}${formatPct(bazinMargin)}`;
       document.getElementById('simResultGraham').textContent = formatBRL(graham);
       document.getElementById('simResultProjective').textContent = formatBRL(projCeiling);
       document.getElementById('simResultProjectiveDpa').textContent = `DPA Projetado: ${formatBRL(projDpa)}`;
+
+      // Update 12M vs 5Y comparison badge
+      const diffBadge = document.getElementById('simDpaDiffBadge');
+      if (diffBadge) {
+        const diffPct = dpa5y > 0 ? ((dpa12m - dpa5y) / dpa5y) * 100 : 0;
+        if (diffPct >= 18) {
+          diffBadge.textContent = `🔥 12M Excepcionalmente Alto (+${formatPct(diffPct)} vs 5A)`;
+          diffBadge.className = 'font-mono font-semibold text-amber-400';
+        } else if (diffPct <= -18) {
+          diffBadge.textContent = `❄️ 12M Excepcionalmente Baixo (${formatPct(diffPct)} vs 5A)`;
+          diffBadge.className = 'font-mono font-semibold text-cyan-400';
+        } else {
+          diffBadge.textContent = `⚖️ Consistente (${diffPct >= 0 ? '+' : ''}${formatPct(diffPct)} vs 5A)`;
+          diffBadge.className = 'font-mono font-semibold text-emerald-400';
+        }
+      }
 
       // Populate Sensitivity Ladder (5% to 10%)
       const yields = [5.0, 6.0, 6.5, 7.0, 8.0, 9.0, 10.0];
       const tbody = document.getElementById('simSensitivityBody');
       tbody.innerHTML = yields.map(y => {
-        const tBazin = dpa / (y / 100);
+        const tBazin5y = dpa5y / (y / 100);
+        const tBazin12m = dpa12m / (y / 100);
         const tProj = projDpa / (y / 100);
-        const diffPct = tBazin > 0 ? ((tBazin - price) / tBazin) * 100 : -100;
-        const badge = price <= tBazin
+        const diffPct = tBazin5y > 0 ? ((tBazin5y - price) / tBazin5y) * 100 : -100;
+        const badge = price <= tBazin5y
           ? `<span class="text-emerald-400 font-semibold">🟢 Comprar (+${formatPct(diffPct)})</span>`
           : `<span class="text-rose-400">🔴 Acima (${formatPct(diffPct)})</span>`;
         const highlight = Math.abs(y - targetDy) < 0.1 ? 'bg-emerald-500/10 font-bold' : '';
         return `
           <tr class="${highlight}">
             <td class="py-2 px-3 text-white">${formatPct(y)} a.a.</td>
-            <td class="py-2 px-3 text-right text-emerald-400">${formatBRL(tBazin)}</td>
+            <td class="py-2 px-3 text-right text-emerald-400">${formatBRL(tBazin5y)}</td>
+            <td class="py-2 px-3 text-right text-amber-300">${formatBRL(tBazin12m)}</td>
             <td class="py-2 px-3 text-right text-purple-300">${formatBRL(tProj)}</td>
             <td class="py-2 px-3 text-right">${badge}</td>
           </tr>
@@ -1464,6 +1586,7 @@
         document.getElementById('formSector').value = st.sector;
         document.getElementById('formPrice').value = st.price;
         document.getElementById('formDpa').value = st.dpa;
+        document.getElementById('formDpa12m').value = st.dpa12m !== undefined && st.dpa12m !== null ? st.dpa12m : st.dpa;
         document.getElementById('formLpa').value = st.lpa || '';
         document.getElementById('formVpa').value = st.vpa || '';
         document.getElementById('formMethod').value = st.method || 'BAZIN';
@@ -1471,6 +1594,11 @@
         document.getElementById('formManualCeiling').value = st.manualCeiling || '';
         document.getElementById('formFavorite').checked = Boolean(st.favorite);
         document.getElementById('formNotes').value = st.notes || '';
+        if (Array.isArray(st.divs5y) && st.divs5y.length === 5) {
+          ['divY1', 'divY2', 'divY3', 'divY4', 'divY5'].forEach((id, i) => {
+            document.getElementById(id).value = st.divs5y[i];
+          });
+        }
       } else {
         title.textContent = 'Adicionar Ação à Carteira';
         document.getElementById('formStockId').value = '';
@@ -1487,10 +1615,28 @@
       }
     }
 
+    function populate5YearInputs(divs5y) {
+      if (!Array.isArray(divs5y) || divs5y.length === 0) return;
+      const ids = ['divY1', 'divY2', 'divY3', 'divY4', 'divY5'];
+      ids.forEach((id, idx) => {
+        const el = document.getElementById(id);
+        if (el && divs5y[idx] !== undefined) {
+          el.value = Number(divs5y[idx]).toFixed(2);
+        }
+      });
+      const avg = divs5y.reduce((a, b) => a + Number(b || 0), 0) / divs5y.length;
+      const disp = document.getElementById('fiveYearAvgDisplay');
+      if (disp) disp.textContent = `Média 5A: ${formatBRL(avg)}`;
+    }
+
     function updateModalLivePreview() {
+      const dpa5y = Number(document.getElementById('formDpa').value) || 0;
+      const raw12m = Number(document.getElementById('formDpa12m').value);
+      const dpa12m = raw12m > 0 ? raw12m : dpa5y;
       const tempStock = {
         price: Number(document.getElementById('formPrice').value) || 0,
-        dpa: Number(document.getElementById('formDpa').value) || 0,
+        dpa: dpa5y,
+        dpa12m,
         lpa: Number(document.getElementById('formLpa').value) || 0,
         vpa: Number(document.getElementById('formVpa').value) || 0,
         targetDy: Number(document.getElementById('formTargetDy').value) || state.globalDy,
@@ -1499,8 +1645,27 @@
       };
       const m = calculateMetrics(tempStock);
       document.getElementById('modalPreviewBazin').textContent = formatBRL(m.bazinCeiling);
+      const b12El = document.getElementById('modalPreviewBazin12m');
+      if (b12El) b12El.textContent = formatBRL(m.bazin12mCeiling);
       document.getElementById('modalPreviewGraham').textContent = m.grahamCeiling > 0 ? formatBRL(m.grahamCeiling) : '—';
       document.getElementById('modalPreviewFinal').textContent = formatBRL(m.finalCeiling);
+
+      const alertText = document.getElementById('modalDpaAlertText');
+      if (alertText) {
+        if (dpa5y <= 0 && dpa12m <= 0) {
+          alertText.textContent = 'Preencha o DPA ou digite um ticker';
+          alertText.className = 'font-mono font-semibold text-slate-400';
+        } else if (m.dpaAnomaly === 'HIGH') {
+          alertText.textContent = `🔥 12M Alto (+${formatPct(m.dpaDiffPct)} vs 5A) — Dividendo recente acima do padrão histórico`;
+          alertText.className = 'font-mono font-semibold text-amber-400';
+        } else if (m.dpaAnomaly === 'LOW') {
+          alertText.textContent = `❄️ 12M Baixo (${formatPct(m.dpaDiffPct)} vs 5A) — Dividendo recente abaixo da média histórica`;
+          alertText.className = 'font-mono font-semibold text-cyan-400';
+        } else {
+          alertText.textContent = `⚖️ Estável (${m.dpaDiffPct >= 0 ? '+' : ''}${formatPct(m.dpaDiffPct)} vs 5A) — Dividendos consistentes`;
+          alertText.className = 'font-mono font-semibold text-emerald-400';
+        }
+      }
     }
 
     function handleSaveStockForm(e) {
@@ -1511,6 +1676,7 @@
       const sector = document.getElementById('formSector').value;
       const price = Number(document.getElementById('formPrice').value) || 0;
       const dpa = Number(document.getElementById('formDpa').value) || 0;
+      const dpa12m = Number(document.getElementById('formDpa12m').value) || dpa;
       const lpa = Number(document.getElementById('formLpa').value) || 0;
       const vpa = Number(document.getElementById('formVpa').value) || 0;
       const method = document.getElementById('formMethod').value;
@@ -1519,23 +1685,27 @@
       const favorite = document.getElementById('formFavorite').checked;
       const notes = document.getElementById('formNotes').value.trim();
 
+      const yVals = ['divY1', 'divY2', 'divY3', 'divY4', 'divY5']
+        .map(yId => Number(document.getElementById(yId).value) || 0);
+      const divs5y = yVals.some(v => v > 0) ? yVals : null;
+
       if (!ticker || !name) return;
 
       if (id) {
         const idx = state.stocks.findIndex(s => s.id === id);
         if (idx > -1) {
-          state.stocks[idx] = { id, ticker, name, sector, price, dpa, lpa, vpa, method, targetDy, manualCeiling, favorite, notes };
+          state.stocks[idx] = { id, ticker, name, sector, price, dpa, dpa12m, divs5y, lpa, vpa, method, targetDy, manualCeiling, favorite, notes };
         }
         showToast(`Ativo ${ticker} atualizado!`, 'success');
       } else {
         const existingIdx = state.stocks.findIndex(s => s.ticker === ticker);
         if (existingIdx > -1) {
-          state.stocks[existingIdx] = { ...state.stocks[existingIdx], name, sector, price, dpa, lpa, vpa, method, targetDy, manualCeiling, favorite, notes };
+          state.stocks[existingIdx] = { ...state.stocks[existingIdx], name, sector, price, dpa, dpa12m, divs5y, lpa, vpa, method, targetDy, manualCeiling, favorite, notes };
           showToast(`Ativo ${ticker} atualizado na carteira!`, 'success');
         } else {
           state.stocks.unshift({
             id: 'stock_' + Date.now() + '_' + ticker,
-            ticker, name, sector, price, dpa, lpa, vpa, method, targetDy, manualCeiling, favorite, notes
+            ticker, name, sector, price, dpa, dpa12m, divs5y, lpa, vpa, method, targetDy, manualCeiling, favorite, notes
           });
           showToast(`Ação ${ticker} adicionada com sucesso!`, 'success');
         }
@@ -1546,37 +1716,37 @@
       renderAll();
     }
 
-    // Base estendida de indicadores fundamentalistas da B3 para enriquecer a busca online
+    // Base estendida de indicadores fundamentalistas da B3 com DPA Médio 5 Anos (dpa), DPA Últimos 12M (dpa12m) e histórico 5 anos (divs5y)
     const B3_FUNDAMENTALS_DB = {
-      BBAS3: { name: 'Banco do Brasil ON', sector: 'Bancos', price: 27.40, dpa: 2.62, lpa: 6.35, vpa: 31.80 },
-      TAEE11: { name: 'Taesa Unit', sector: 'Energia Elétrica', price: 34.80, dpa: 3.10, lpa: 3.85, vpa: 19.40 },
-      TAEE4: { name: 'Taesa PN', sector: 'Energia Elétrica', price: 11.60, dpa: 1.03, lpa: 1.28, vpa: 6.46 },
-      BBSE3: { name: 'BB Seguridade ON', sector: 'Seguros', price: 35.90, dpa: 3.45, lpa: 4.10, vpa: 5.60 },
-      CXSE3: { name: 'Caixa Seguridade ON', sector: 'Seguros', price: 14.80, dpa: 1.15, lpa: 1.32, vpa: 4.20 },
-      PSSA3: { name: 'Porto Seguro ON', sector: 'Seguros', price: 36.20, dpa: 1.95, lpa: 3.90, vpa: 20.50 },
-      ITUB4: { name: 'Itaú Unibanco PN', sector: 'Bancos', price: 33.50, dpa: 2.45, lpa: 4.15, vpa: 20.10 },
-      ITSA4: { name: 'Itaúsa PN', sector: 'Bancos', price: 10.45, dpa: 0.82, lpa: 1.45, vpa: 8.60 },
-      BBDC4: { name: 'Bradesco PN', sector: 'Bancos', price: 13.20, dpa: 1.05, lpa: 1.65, vpa: 15.40 },
-      SANB11: { name: 'Santander Brasil Unit', sector: 'Bancos', price: 28.90, dpa: 2.10, lpa: 3.40, vpa: 24.10 },
-      EGIE3: { name: 'Engie Brasil ON', sector: 'Energia Elétrica', price: 41.20, dpa: 2.95, lpa: 4.30, vpa: 14.20 },
-      CPLE6: { name: 'Copel PNB', sector: 'Energia Elétrica', price: 10.15, dpa: 0.72, lpa: 1.10, vpa: 8.40 },
-      CMIG4: { name: 'Cemig PN', sector: 'Energia Elétrica', price: 11.30, dpa: 1.15, lpa: 2.05, vpa: 9.10 },
-      ISAE4: { name: 'ISA Energia (ex-TRPL4)', sector: 'Energia Elétrica', price: 24.50, dpa: 2.20, lpa: 3.90, vpa: 28.40 },
-      TRPL4: { name: 'ISA Energia PN', sector: 'Energia Elétrica', price: 24.50, dpa: 2.20, lpa: 3.90, vpa: 28.40 },
-      VALE3: { name: 'Vale ON', sector: 'Mineração', price: 58.90, dpa: 5.10, lpa: 9.80, vpa: 44.50 },
-      PETR4: { name: 'Petrobras PN', sector: 'Petróleo e Gás', price: 36.40, dpa: 5.40, lpa: 9.20, vpa: 30.10 },
-      PETR3: { name: 'Petrobras ON', sector: 'Petróleo e Gás', price: 39.10, dpa: 5.40, lpa: 9.20, vpa: 30.10 },
-      PRIO3: { name: 'PRIO ON', sector: 'Petróleo e Gás', price: 41.80, dpa: 0.50, lpa: 5.80, vpa: 18.20 },
-      SAPR11: { name: 'Sanepar Unit', sector: 'Saneamento', price: 28.10, dpa: 1.95, lpa: 5.10, vpa: 33.40 },
-      SAPR4: { name: 'Sanepar PN', sector: 'Saneamento', price: 5.65, dpa: 0.39, lpa: 1.02, vpa: 6.68 },
-      CSMG3: { name: 'Copasa ON', sector: 'Saneamento', price: 21.40, dpa: 1.85, lpa: 3.40, vpa: 20.80 },
-      SBSP3: { name: 'Sabesp ON', sector: 'Saneamento', price: 88.50, dpa: 2.40, lpa: 7.20, vpa: 46.00 },
-      VIVT3: { name: 'Telefônica Vivo ON', sector: 'Telecomunicações', price: 51.30, dpa: 3.40, lpa: 3.30, vpa: 42.10 },
-      TIMS3: { name: 'TIM Brasil ON', sector: 'Telecomunicações', price: 17.80, dpa: 1.25, lpa: 1.30, vpa: 10.20 },
-      WEGE3: { name: 'WEG ON', sector: 'Indústria / Outros', price: 52.40, dpa: 0.85, lpa: 1.42, vpa: 4.50 },
-      KLBN11: { name: 'Klabin Unit', sector: 'Indústria / Outros', price: 21.60, dpa: 1.35, lpa: 1.65, vpa: 9.80 },
-      GGBR4: { name: 'Gerdau PN', sector: 'Indústria / Outros', price: 18.90, dpa: 1.40, lpa: 3.10, vpa: 24.50 },
-      B3SA3: { name: 'B3 ON', sector: 'Indústria / Outros', price: 10.80, dpa: 0.78, lpa: 0.85, vpa: 3.70 }
+      BBAS3: { name: 'Banco do Brasil ON', sector: 'Bancos', price: 27.40, dpa: 2.28, dpa12m: 2.62, divs5y: [1.65, 2.10, 2.38, 2.65, 2.62], lpa: 6.35, vpa: 31.80 },
+      TAEE11: { name: 'Taesa Unit', sector: 'Energia Elétrica', price: 34.80, dpa: 3.65, dpa12m: 2.85, divs5y: [4.55, 4.80, 3.35, 2.70, 2.85], lpa: 3.85, vpa: 19.40 },
+      TAEE4: { name: 'Taesa PN', sector: 'Energia Elétrica', price: 11.60, dpa: 1.22, dpa12m: 0.95, divs5y: [1.51, 1.60, 1.12, 0.90, 0.95], lpa: 1.28, vpa: 6.46 },
+      BBSE3: { name: 'BB Seguridade ON', sector: 'Seguros', price: 35.90, dpa: 2.92, dpa12m: 3.55, divs5y: [1.85, 2.60, 3.20, 3.40, 3.55], lpa: 4.10, vpa: 5.60 },
+      CXSE3: { name: 'Caixa Seguridade ON', sector: 'Seguros', price: 14.80, dpa: 0.92, dpa12m: 1.18, divs5y: [0.55, 0.78, 0.98, 1.11, 1.18], lpa: 1.32, vpa: 4.20 },
+      PSSA3: { name: 'Porto Seguro ON', sector: 'Seguros', price: 36.20, dpa: 1.62, dpa12m: 1.98, divs5y: [1.20, 1.40, 1.65, 1.87, 1.98], lpa: 3.90, vpa: 20.50 },
+      ITUB4: { name: 'Itaú Unibanco PN', sector: 'Bancos', price: 33.50, dpa: 1.95, dpa12m: 2.48, divs5y: [1.10, 1.45, 2.15, 2.57, 2.48], lpa: 4.15, vpa: 20.10 },
+      ITSA4: { name: 'Itaúsa PN', sector: 'Bancos', price: 10.45, dpa: 0.68, dpa12m: 0.86, divs5y: [0.48, 0.58, 0.70, 0.78, 0.86], lpa: 1.45, vpa: 8.60 },
+      BBDC4: { name: 'Bradesco PN', sector: 'Bancos', price: 13.20, dpa: 1.02, dpa12m: 1.05, divs5y: [0.95, 1.05, 1.08, 0.97, 1.05], lpa: 1.65, vpa: 15.40 },
+      SANB11: { name: 'Santander Brasil Unit', sector: 'Bancos', price: 28.90, dpa: 2.35, dpa12m: 1.95, divs5y: [2.90, 2.65, 2.25, 2.00, 1.95], lpa: 3.40, vpa: 24.10 },
+      EGIE3: { name: 'Engie Brasil ON', sector: 'Energia Elétrica', price: 41.20, dpa: 2.78, dpa12m: 2.90, divs5y: [2.45, 2.70, 2.95, 2.90, 2.90], lpa: 4.30, vpa: 14.20 },
+      CPLE6: { name: 'Copel PNB', sector: 'Energia Elétrica', price: 10.15, dpa: 0.76, dpa12m: 0.68, divs5y: [0.95, 0.85, 0.68, 0.64, 0.68], lpa: 1.10, vpa: 8.40 },
+      CMIG4: { name: 'Cemig PN', sector: 'Energia Elétrica', price: 11.30, dpa: 0.96, dpa12m: 1.42, divs5y: [0.68, 0.82, 0.90, 0.98, 1.42], lpa: 2.05, vpa: 9.10 },
+      ISAE4: { name: 'ISA Energia (ex-TRPL4)', sector: 'Energia Elétrica', price: 24.50, dpa: 2.15, dpa12m: 2.22, divs5y: [2.30, 1.95, 2.10, 2.18, 2.22], lpa: 3.90, vpa: 28.40 },
+      TRPL4: { name: 'ISA Energia PN', sector: 'Energia Elétrica', price: 24.50, dpa: 2.15, dpa12m: 2.22, divs5y: [2.30, 1.95, 2.10, 2.18, 2.22], lpa: 3.90, vpa: 28.40 },
+      VALE3: { name: 'Vale ON', sector: 'Mineração', price: 58.90, dpa: 6.80, dpa12m: 4.65, divs5y: [10.50, 7.60, 6.10, 5.15, 4.65], lpa: 9.80, vpa: 44.50 },
+      PETR4: { name: 'Petrobras PN', sector: 'Petróleo e Gás', price: 36.40, dpa: 8.50, dpa12m: 5.40, divs5y: [13.20, 11.40, 7.30, 5.20, 5.40], lpa: 9.20, vpa: 30.10 },
+      PETR3: { name: 'Petrobras ON', sector: 'Petróleo e Gás', price: 39.10, dpa: 8.50, dpa12m: 5.40, divs5y: [13.20, 11.40, 7.30, 5.20, 5.40], lpa: 9.20, vpa: 30.10 },
+      PRIO3: { name: 'PRIO ON', sector: 'Petróleo e Gás', price: 41.80, dpa: 0.25, dpa12m: 0.50, divs5y: [0.00, 0.10, 0.25, 0.40, 0.50], lpa: 5.80, vpa: 18.20 },
+      SAPR11: { name: 'Sanepar Unit', sector: 'Saneamento', price: 28.10, dpa: 1.78, dpa12m: 1.95, divs5y: [1.45, 1.65, 1.85, 2.00, 1.95], lpa: 5.10, vpa: 33.40 },
+      SAPR4: { name: 'Sanepar PN', sector: 'Saneamento', price: 5.65, dpa: 0.36, dpa12m: 0.39, divs5y: [0.29, 0.33, 0.37, 0.40, 0.39], lpa: 1.02, vpa: 6.68 },
+      CSMG3: { name: 'Copasa ON', sector: 'Saneamento', price: 21.40, dpa: 1.62, dpa12m: 2.05, divs5y: [1.20, 1.45, 1.65, 1.75, 2.05], lpa: 3.40, vpa: 20.80 },
+      SBSP3: { name: 'Sabesp ON', sector: 'Saneamento', price: 88.50, dpa: 1.85, dpa12m: 2.40, divs5y: [1.30, 1.55, 1.85, 2.15, 2.40], lpa: 7.20, vpa: 46.00 },
+      VIVT3: { name: 'Telefônica Vivo ON', sector: 'Telecomunicações', price: 51.30, dpa: 3.32, dpa12m: 3.45, divs5y: [3.10, 3.25, 3.40, 3.40, 3.45], lpa: 3.30, vpa: 42.10 },
+      TIMS3: { name: 'TIM Brasil ON', sector: 'Telecomunicações', price: 17.80, dpa: 0.98, dpa12m: 1.32, divs5y: [0.65, 0.80, 0.98, 1.15, 1.32], lpa: 1.30, vpa: 10.20 },
+      WEGE3: { name: 'WEG ON', sector: 'Indústria / Outros', price: 52.40, dpa: 0.68, dpa12m: 0.88, divs5y: [0.48, 0.58, 0.68, 0.78, 0.88], lpa: 1.42, vpa: 4.50 },
+      KLBN11: { name: 'Klabin Unit', sector: 'Indústria / Outros', price: 21.60, dpa: 1.38, dpa12m: 1.28, divs5y: [1.45, 1.52, 1.35, 1.30, 1.28], lpa: 1.65, vpa: 9.80 },
+      GGBR4: { name: 'Gerdau PN', sector: 'Indústria / Outros', price: 18.90, dpa: 1.95, dpa12m: 1.15, divs5y: [2.85, 2.50, 1.75, 1.50, 1.15], lpa: 3.10, vpa: 24.50 },
+      B3SA3: { name: 'B3 ON', sector: 'Indústria / Outros', price: 10.80, dpa: 0.82, dpa12m: 0.75, divs5y: [0.95, 0.88, 0.78, 0.74, 0.75], lpa: 0.85, vpa: 3.70 }
     };
 
     function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
@@ -1595,7 +1765,7 @@
     }
 
     // ---------------------------------------------------------
-    // 8. LIVE QUOTES REFRESH (MULTI-SOURCE: BRAPI + YAHOO B3) & CLOUD GIST SYNC
+    // 8. LIVE QUOTES REFRESH (MULTI-SOURCE 5-YEAR & 12M DPA: BRAPI + YAHOO B3) & CLOUD GIST SYNC
     // ---------------------------------------------------------
     async function fetchSingleTickerOnline(rawTicker) {
       const ticker = (rawTicker || '').trim().toUpperCase();
@@ -1603,7 +1773,6 @@
       const token = (state.cloudConfig.brapiToken || '').trim();
       const baseRef = B3_FUNDAMENTALS_DB[ticker] || B3_PRESETS.find(p => p.ticker === ticker) || {};
 
-      // Criamos promessas rápidas em paralelo para buscar o preço ao vivo o mais rápido possível
       const liveTasks = [];
 
       // Fonte 1: Brapi.dev
@@ -1619,6 +1788,8 @@
           name: r.longName || r.shortName || baseRef.name || ticker,
           price: Number(r.regularMarketPrice),
           dpa: baseRef.dpa || null,
+          dpa12m: baseRef.dpa12m || baseRef.dpa || null,
+          divs5y: baseRef.divs5y || null,
           lpa: r.earningsPerShare ? Number(r.earningsPerShare) : (baseRef.lpa || null),
           vpa: baseRef.vpa || null,
           sector: baseRef.sector || null,
@@ -1626,8 +1797,8 @@
         };
       })());
 
-      // Fontes 2, 3 e 4: Yahoo Finance B3 (.SA) via múltiplos proxies CORS em paralelo
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}.SA?range=1y&interval=1d&events=div`;
+      // Fontes 2, 3 e 4: Yahoo Finance B3 (.SA) com histórico de 5 ANOS de dividendos (range=5y)
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}.SA?range=5y&interval=1d&events=div`;
       const proxyUrls = [
         `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
         `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
@@ -1641,31 +1812,60 @@
           const data = await res.json();
           const result = data && data.chart && data.chart.result && data.chart.result[0];
           if (!result || !result.meta || !result.meta.regularMarketPrice) throw new Error('Invalid Yahoo payload');
-          let dpa12m = baseRef.dpa || null;
+
+          let dpa5y = baseRef.dpa || null;
+          let dpa12m = baseRef.dpa12m || baseRef.dpa || null;
+          let divs5y = baseRef.divs5y || null;
+
           if (result.events && result.events.dividends) {
             const divs = Object.values(result.events.dividends);
-            const sumDiv = divs.reduce((acc, d) => acc + (Number(d.amount) || 0), 0);
-            if (sumDiv > 0) dpa12m = Number(sumDiv.toFixed(2));
+            if (divs.length > 0) {
+              const nowSec = Math.floor(Date.now() / 1000);
+              const oneYearSec = 365 * 24 * 3600;
+              // Calcula soma de 5 anos e soma dos últimos 12 meses
+              let sum5y = 0;
+              let sum12m = 0;
+              const buckets = [0, 0, 0, 0, 0]; // Ano 1 (mais antigo) até Ano 5 (últimos 12M)
+              divs.forEach(d => {
+                const amt = Number(d.amount) || 0;
+                const ts = Number(d.date) || 0;
+                const ageYears = Math.floor((nowSec - ts) / oneYearSec);
+                if (ageYears >= 0 && ageYears < 5) {
+                  sum5y += amt;
+                  const bucketIdx = 4 - ageYears;
+                  buckets[bucketIdx] = Number((buckets[bucketIdx] + amt).toFixed(2));
+                }
+                if (nowSec - ts <= oneYearSec) {
+                  sum12m += amt;
+                }
+              });
+              if (sum5y > 0) {
+                dpa5y = Number((sum5y / 5).toFixed(2));
+                dpa12m = sum12m > 0 ? Number(sum12m.toFixed(2)) : dpa5y;
+                divs5y = buckets;
+              }
+            }
           }
           return {
             ticker,
             name: baseRef.name || result.meta.longName || result.meta.shortName || ticker,
             price: Number(result.meta.regularMarketPrice),
-            dpa: dpa12m,
+            dpa: dpa5y,
+            dpa12m,
+            divs5y,
             lpa: baseRef.lpa || null,
             vpa: baseRef.vpa || null,
             sector: baseRef.sector || null,
-            source: 'Yahoo Finance B3 (Ao Vivo)'
+            source: 'Yahoo Finance B3 (5 Anos)'
           };
         })());
       });
 
       try {
-        // Retorna a primeira fonte online que responder com sucesso!
         const liveResult = await Promise.any(liveTasks);
         if (liveResult && liveResult.price) return liveResult;
       } catch (e) {
-        // Caso o navegador esteja sem internet ou bloqueado por firewall/sandbox, usa a base de referência B3
+        // Fallback local se sem internet/bloqueado
       }
 
       if (baseRef && baseRef.price) {
@@ -1674,10 +1874,12 @@
           name: baseRef.name || ticker,
           price: baseRef.price,
           dpa: baseRef.dpa || null,
+          dpa12m: baseRef.dpa12m || baseRef.dpa || null,
+          divs5y: baseRef.divs5y || null,
           lpa: baseRef.lpa || null,
           vpa: baseRef.vpa || null,
           sector: baseRef.sector || 'Indústria / Outros',
-          source: 'Base B3 (Modo Rápido)'
+          source: 'Base Histórica B3 (5 Anos)'
         };
       }
       return null;
@@ -1889,10 +2091,14 @@
             nameInput.value = data.name;
           }
           priceInput.value = Number(data.price).toFixed(2);
-          if (data.dpa && !document.getElementById('formDpa').value) {
+          if (data.dpa && (!document.getElementById('formDpa').value || !document.getElementById('formStockId').value)) {
             document.getElementById('formDpa').value = Number(data.dpa).toFixed(2);
-          } else if (data.dpa && !document.getElementById('formStockId').value) {
-            document.getElementById('formDpa').value = Number(data.dpa).toFixed(2);
+          }
+          if (data.dpa12m && (!document.getElementById('formDpa12m').value || !document.getElementById('formStockId').value)) {
+            document.getElementById('formDpa12m').value = Number(data.dpa12m).toFixed(2);
+          }
+          if (data.divs5y) {
+            populate5YearInputs(data.divs5y);
           }
           if (data.lpa && !document.getElementById('formStockId').value) {
             document.getElementById('formLpa').value = Number(data.lpa).toFixed(2);
@@ -1955,6 +2161,7 @@
         if (data && data.price) {
           document.getElementById('simPrice').value = Number(data.price).toFixed(2);
           if (data.dpa) document.getElementById('simDpa').value = Number(data.dpa).toFixed(2);
+          if (data.dpa12m) document.getElementById('simDpa12m').value = Number(data.dpa12m).toFixed(2);
           if (data.lpa) document.getElementById('simLpa').value = Number(data.lpa).toFixed(2);
           if (data.vpa) document.getElementById('simVpa').value = Number(data.vpa).toFixed(2);
           runSimulatorCalculation();
@@ -2079,8 +2286,25 @@
       });
       document.getElementById('stockForm').addEventListener('submit', handleSaveStockForm);
 
-      ['formPrice', 'formDpa', 'formLpa', 'formVpa', 'formMethod', 'formTargetDy', 'formManualCeiling'].forEach(fieldId => {
+      ['formPrice', 'formDpa', 'formDpa12m', 'formLpa', 'formVpa', 'formMethod', 'formTargetDy', 'formManualCeiling'].forEach(fieldId => {
         document.getElementById(fieldId).addEventListener('input', updateModalLivePreview);
+      });
+
+      document.getElementById('toggle5yCalcBtn').addEventListener('click', () => {
+        document.getElementById('fiveYearCalcBox').classList.toggle('hidden');
+      });
+
+      document.querySelectorAll('.div-5y-input').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const vals = ['divY1', 'divY2', 'divY3', 'divY4', 'divY5'].map(id => Number(document.getElementById(id).value) || 0);
+          const avg = vals.reduce((a, b) => a + b, 0) / 5;
+          document.getElementById('formDpa').value = avg.toFixed(2);
+          if (vals[4] > 0) {
+            document.getElementById('formDpa12m').value = vals[4].toFixed(2);
+          }
+          document.getElementById('fiveYearAvgDisplay').textContent = `Média 5A: ${formatBRL(avg)}`;
+          updateModalLivePreview();
+        });
       });
 
       document.getElementById('presetTickersContainer').addEventListener('click', (e) => {
@@ -2094,6 +2318,8 @@
           document.getElementById('formSector').value = preset.sector;
           document.getElementById('formPrice').value = preset.price;
           document.getElementById('formDpa').value = preset.dpa;
+          document.getElementById('formDpa12m').value = preset.dpa12m || preset.dpa;
+          if (preset.divs5y) populate5YearInputs(preset.divs5y);
           document.getElementById('formLpa').value = preset.lpa;
           document.getElementById('formVpa').value = preset.vpa;
           document.getElementById('formTargetDy').value = preset.targetDy;
@@ -2106,7 +2332,7 @@
       });
 
       // Simulator Events
-      ['simTicker', 'simPrice', 'simDpa', 'simTargetDy', 'simLpa', 'simVpa', 'simPayout'].forEach(id => {
+      ['simTicker', 'simPrice', 'simDpa', 'simDpa12m', 'simTargetDy', 'simLpa', 'simVpa', 'simPayout'].forEach(id => {
         document.getElementById(id).addEventListener('input', runSimulatorCalculation);
       });
 
@@ -2122,21 +2348,23 @@
       });
 
       document.getElementById('simLoadPresetBtn').addEventListener('click', () => {
-        document.getElementById('simTicker').value = 'TAEE11';
-        document.getElementById('simPrice').value = '34.80';
-        document.getElementById('simDpa').value = '3.10';
-        document.getElementById('simTargetDy').value = '6.5';
-        document.getElementById('simLpa').value = '3.85';
-        document.getElementById('simVpa').value = '19.40';
-        document.getElementById('simPayout').value = '80';
+        document.getElementById('simTicker').value = 'PETR4';
+        document.getElementById('simPrice').value = '36.40';
+        document.getElementById('simDpa').value = '8.50';
+        document.getElementById('simDpa12m').value = '5.40';
+        document.getElementById('simTargetDy').value = '9.0';
+        document.getElementById('simLpa').value = '9.20';
+        document.getElementById('simVpa').value = '30.10';
+        document.getElementById('simPayout').value = '60';
         runSimulatorCalculation();
-        showToast('Exemplo TAEE11 carregado no simulador!', 'info');
+        showToast('Exemplo PETR4 carregado (comparando média 5A vs 12M)!', 'info');
       });
 
       document.getElementById('simSaveToPortfolioBtn').addEventListener('click', () => {
         const ticker = (document.getElementById('simTicker').value || 'ATIVO').trim().toUpperCase();
         const price = Number(document.getElementById('simPrice').value) || 10;
         const dpa = Number(document.getElementById('simDpa').value) || 1;
+        const dpa12m = Number(document.getElementById('simDpa12m').value) || dpa;
         const targetDy = Number(document.getElementById('simTargetDy').value) || 6;
         const lpa = Number(document.getElementById('simLpa').value) || 0;
         const vpa = Number(document.getElementById('simVpa').value) || 0;
@@ -2145,6 +2373,7 @@
         if (existing) {
           existing.price = price;
           existing.dpa = dpa;
+          existing.dpa12m = dpa12m;
           existing.targetDy = targetDy;
           existing.lpa = lpa;
           existing.vpa = vpa;
@@ -2155,7 +2384,7 @@
             ticker,
             name: `${ticker} (Simulador)`,
             sector: 'Indústria / Outros',
-            price, dpa, lpa, vpa,
+            price, dpa, dpa12m, lpa, vpa,
             targetDy,
             method: 'BAZIN',
             manualCeiling: 0,
