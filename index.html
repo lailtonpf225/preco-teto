@@ -641,7 +641,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <div>
             <div class="flex items-center justify-between mb-1">
               <label for="formPrice" class="block text-xs font-medium text-slate-300">Preço Atual (R$) *</label>
@@ -650,8 +650,13 @@
             <input id="formPrice" type="number" step="0.01" min="0.01" placeholder="Busca automática..." required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none transition" />
           </div>
           <div>
-            <label for="formDpa" class="block text-xs font-medium text-slate-300 mb-1">DPA Anual (R$) *</label>
-            <input id="formDpa" type="number" step="0.01" min="0" placeholder="2.60" required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none" />
+            <label for="formDpa" class="block text-xs font-medium text-slate-300 mb-1">DPA médio 5 anos (R$) *</label>
+            <input id="formDpa" type="number" step="0.01" min="0" placeholder="Média de 5 anos" required class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none" />
+            <p class="text-[10px] text-slate-500 mt-1">Usado no teto Bazin</p>
+          </div>
+          <div>
+            <label for="formDpa12m" class="block text-xs font-medium text-slate-300 mb-1">DPA últimos 12 meses (R$)</label>
+            <input id="formDpa12m" type="number" step="0.01" min="0" placeholder="Não disponível" class="w-full bg-slate-900/70 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-300 font-mono outline-none" />
           </div>
           <div>
             <label for="formLpa" class="block text-xs font-medium text-slate-300 mb-1">LPA (R$)</label>
@@ -662,6 +667,7 @@
             <input id="formVpa" type="number" step="0.01" placeholder="31.80" class="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-xl px-3 py-2 text-sm text-white font-mono outline-none" />
           </div>
         </div>
+        <p class="text-[11px] text-slate-500 -mt-1">A média de 5 anos reduz o impacto de dividendos extraordinários. Se o histórico completo não estiver disponível, confira os valores e preencha manualmente.</p>
 
         <!-- Method Selection & Target DY -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
@@ -1464,6 +1470,7 @@
         document.getElementById('formSector').value = st.sector;
         document.getElementById('formPrice').value = st.price;
         document.getElementById('formDpa').value = st.dpa;
+        document.getElementById('formDpa12m').value = st.dpa12m || '';
         document.getElementById('formLpa').value = st.lpa || '';
         document.getElementById('formVpa').value = st.vpa || '';
         document.getElementById('formMethod').value = st.method || 'BAZIN';
@@ -1511,6 +1518,7 @@
       const sector = document.getElementById('formSector').value;
       const price = Number(document.getElementById('formPrice').value) || 0;
       const dpa = Number(document.getElementById('formDpa').value) || 0;
+      const dpa12m = Number(document.getElementById('formDpa12m').value) || 0;
       const lpa = Number(document.getElementById('formLpa').value) || 0;
       const vpa = Number(document.getElementById('formVpa').value) || 0;
       const method = document.getElementById('formMethod').value;
@@ -1524,18 +1532,18 @@
       if (id) {
         const idx = state.stocks.findIndex(s => s.id === id);
         if (idx > -1) {
-          state.stocks[idx] = { id, ticker, name, sector, price, dpa, lpa, vpa, method, targetDy, manualCeiling, favorite, notes };
+          state.stocks[idx] = { id, ticker, name, sector, price, dpa, dpa12m, lpa, vpa, method, targetDy, manualCeiling, favorite, notes };
         }
         showToast(`Ativo ${ticker} atualizado!`, 'success');
       } else {
         const existingIdx = state.stocks.findIndex(s => s.ticker === ticker);
         if (existingIdx > -1) {
-          state.stocks[existingIdx] = { ...state.stocks[existingIdx], name, sector, price, dpa, lpa, vpa, method, targetDy, manualCeiling, favorite, notes };
+          state.stocks[existingIdx] = { ...state.stocks[existingIdx], name, sector, price, dpa, dpa12m, lpa, vpa, method, targetDy, manualCeiling, favorite, notes };
           showToast(`Ativo ${ticker} atualizado na carteira!`, 'success');
         } else {
           state.stocks.unshift({
             id: 'stock_' + Date.now() + '_' + ticker,
-            ticker, name, sector, price, dpa, lpa, vpa, method, targetDy, manualCeiling, favorite, notes
+            ticker, name, sector, price, dpa, dpa12m, lpa, vpa, method, targetDy, manualCeiling, favorite, notes
           });
           showToast(`Ação ${ticker} adicionada com sucesso!`, 'success');
         }
@@ -1602,11 +1610,10 @@
       if (!ticker) return null;
       const token = (state.cloudConfig.brapiToken || '').trim();
       const baseRef = B3_FUNDAMENTALS_DB[ticker] || B3_PRESETS.find(p => p.ticker === ticker) || {};
-
-      // Criamos promessas rápidas em paralelo para buscar o preço ao vivo o mais rápido possível
       const liveTasks = [];
+      const yahooTasks = [];
 
-      // Fonte 1: Brapi.dev
+      // Fonte 1: Brapi.dev fornece preço, mas não o histórico completo de dividendos.
       liveTasks.push((async () => {
         const tokenParam = token ? `?token=${encodeURIComponent(token)}&fundamental=true` : `?fundamental=true`;
         const res = await fetchWithTimeout(`https://brapi.dev/api/quote/${encodeURIComponent(ticker)}${tokenParam}`, {}, 3200);
@@ -1619,15 +1626,17 @@
           name: r.longName || r.shortName || baseRef.name || ticker,
           price: Number(r.regularMarketPrice),
           dpa: baseRef.dpa || null,
+          dpa5yAvg: baseRef.dpa || null,
+          dpa12m: baseRef.dpa || null,
           lpa: r.earningsPerShare ? Number(r.earningsPerShare) : (baseRef.lpa || null),
           vpa: baseRef.vpa || null,
           sector: baseRef.sector || null,
-          source: 'Brapi B3 (Ao Vivo)'
+          source: 'Brapi B3 (Ao Vivo; dividendos de referência)'
         };
       })());
 
-      // Fontes 2, 3 e 4: Yahoo Finance B3 (.SA) via múltiplos proxies CORS em paralelo
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}.SA?range=1y&interval=1d&events=div`;
+      // Yahoo Finance: histórico de dividendos de cinco anos, com DPA médio anual e DPA dos últimos 12 meses.
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}.SA?range=5y&interval=1d&events=div`;
       const proxyUrls = [
         `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
         `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
@@ -1635,37 +1644,66 @@
       ];
 
       proxyUrls.forEach(pUrl => {
-        liveTasks.push((async () => {
-          const res = await fetchWithTimeout(pUrl, {}, 3800);
+        const yahooTask = (async () => {
+          const res = await fetchWithTimeout(pUrl, {}, 5000);
           if (!res.ok) throw new Error('Proxy error');
           const data = await res.json();
           const result = data && data.chart && data.chart.result && data.chart.result[0];
           if (!result || !result.meta || !result.meta.regularMarketPrice) throw new Error('Invalid Yahoo payload');
-          let dpa12m = baseRef.dpa || null;
-          if (result.events && result.events.dividends) {
-            const divs = Object.values(result.events.dividends);
-            const sumDiv = divs.reduce((acc, d) => acc + (Number(d.amount) || 0), 0);
-            if (sumDiv > 0) dpa12m = Number(sumDiv.toFixed(2));
-          }
+
+          const nowSec = Math.floor(Date.now() / 1000);
+          const yearSeconds = 365.25 * 24 * 60 * 60;
+          const annualBuckets = [0, 0, 0, 0, 0];
+          let dpa12m = 0;
+          const divs = Object.values((result.events && result.events.dividends) || {});
+          divs.forEach(div => {
+            const amount = Number(div.amount) || 0;
+            const date = Number(div.date) || 0;
+            const age = nowSec - date;
+            if (amount <= 0 || date <= 0 || age < 0 || age >= 5 * yearSeconds) return;
+            const bucket = Math.floor(age / yearSeconds);
+            if (bucket >= 0 && bucket < 5) annualBuckets[bucket] += amount;
+            if (age < yearSeconds) dpa12m += amount;
+          });
+          const total5y = annualBuckets.reduce((sum, value) => sum + value, 0);
+          const dpa5yAvg = total5y > 0 ? Number((total5y / 5).toFixed(2)) : (baseRef.dpa || null);
+          if (!dpa12m && baseRef.dpa) dpa12m = Number(baseRef.dpa);
           return {
             ticker,
             name: baseRef.name || result.meta.longName || result.meta.shortName || ticker,
             price: Number(result.meta.regularMarketPrice),
-            dpa: dpa12m,
+            dpa: dpa5yAvg,
+            dpa5yAvg,
+            dpa12m: dpa12m > 0 ? Number(dpa12m.toFixed(2)) : null,
             lpa: baseRef.lpa || null,
             vpa: baseRef.vpa || null,
             sector: baseRef.sector || null,
-            source: 'Yahoo Finance B3 (Ao Vivo)'
+            source: total5y > 0 ? 'Yahoo Finance B3 (histórico de dividendos de 5 anos)' : 'Yahoo Finance B3 (DPA de referência)'
           };
-        })());
+        })();
+        yahooTasks.push(yahooTask);
+        liveTasks.push(yahooTask);
       });
 
       try {
-        // Retorna a primeira fonte online que responder com sucesso!
+        // Busca primeiro qualquer cotação; em seguida tenta enriquecer os dividendos com o histórico Yahoo.
         const liveResult = await Promise.any(liveTasks);
-        if (liveResult && liveResult.price) return liveResult;
+        if (liveResult && liveResult.price) {
+          if (yahooTasks.length && !String(liveResult.source || '').includes('histórico de dividendos de 5 anos')) {
+            try {
+              const historyResult = await Promise.any(yahooTasks);
+              if (historyResult && historyResult.price) {
+                liveResult.dpa = historyResult.dpa;
+                liveResult.dpa5yAvg = historyResult.dpa5yAvg;
+                liveResult.dpa12m = historyResult.dpa12m;
+                liveResult.source = `${liveResult.source} + ${historyResult.source}`;
+              }
+            } catch (_) { /* mantém o DPA de referência se o histórico não responder */ }
+          }
+          return liveResult;
+        }
       } catch (e) {
-        // Caso o navegador esteja sem internet ou bloqueado por firewall/sandbox, usa a base de referência B3
+        // Se as fontes online falharem, usa a base de referência B3.
       }
 
       if (baseRef && baseRef.price) {
@@ -1674,164 +1712,15 @@
           name: baseRef.name || ticker,
           price: baseRef.price,
           dpa: baseRef.dpa || null,
+          dpa5yAvg: baseRef.dpa || null,
+          dpa12m: baseRef.dpa || null,
           lpa: baseRef.lpa || null,
           vpa: baseRef.vpa || null,
           sector: baseRef.sector || 'Indústria / Outros',
-          source: 'Base B3 (Modo Rápido)'
+          source: 'Base B3 (Modo Rápido; DPA de referência)'
         };
       }
       return null;
-    }
-
-    async function refreshAllPrices() {
-      const icon = document.getElementById('refreshIcon');
-      icon.classList.add('animate-spin');
-
-      const token = (state.cloudConfig.brapiToken || '').trim();
-      let updatedViaApi = 0;
-
-      // 1. Tenta lote via Brapi se houver token
-      if (token && state.stocks.length > 0) {
-        try {
-          const tickers = state.stocks.map(s => s.ticker).join(',');
-          const res = await fetch(`https://brapi.dev/api/quote/${tickers}?token=${encodeURIComponent(token)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && Array.isArray(data.results)) {
-              data.results.forEach(q => {
-                const st = state.stocks.find(s => s.ticker === q.symbol);
-                if (st && q.regularMarketPrice) {
-                  st.price = Number(q.regularMarketPrice);
-                  updatedViaApi++;
-                }
-              });
-            }
-          }
-        } catch (err) {
-          console.warn('Tentando fallback individual por ativo...');
-        }
-      }
-
-      // 2. Se não usou token Brapi em lote, busca cada ativo via multi-fonte (Brapi gratuito / Yahoo Finance .SA)
-      if (updatedViaApi === 0) {
-        const promises = state.stocks.map(async (st) => {
-          const quote = await fetchSingleTickerOnline(st.ticker);
-          if (quote && quote.price && quote.source !== 'Referência Local B3') {
-            st.price = Number(quote.price.toFixed(2));
-            if (quote.dpa && (!st.dpa || st.dpa <= 0)) st.dpa = quote.dpa;
-            updatedViaApi++;
-          }
-        });
-        await Promise.all(promises);
-      }
-
-      if (updatedViaApi > 0) {
-        showToast(`🌐 ${updatedViaApi} cotações atualizadas online da B3 em tempo real!`, 'success');
-      } else {
-        showToast('Modo offline/sandbox: configure um token gratuito brapi.dev ou acesse via GitHub Pages para cotações ao vivo.', 'info');
-      }
-
-      safeSetStorage(STORAGE_KEYS.PORTFOLIO, state.stocks);
-      renderAll();
-      setTimeout(() => icon.classList.remove('animate-spin'), 500);
-    }
-
-    async function pushToGitHubGist() {
-      const token = document.getElementById('gistTokenInput').value.trim();
-      let gistId = document.getElementById('gistIdInput').value.trim();
-      if (!token) {
-        showToast('Informe seu GitHub Personal Access Token (escopo gist) primeiro.', 'error');
-        return;
-      }
-
-      const payload = {
-        description: 'TetoInvest Pro — Backup Criptografado de Ações Favoritas e Preços Tetos',
-        public: false,
-        files: {
-          'tetoinvest_portfolio.json': {
-            content: JSON.stringify({
-              updatedAt: new Date().toISOString(),
-              globalDy: state.globalDy,
-              stocks: state.stocks
-            }, null, 2)
-          }
-        }
-      };
-
-      try {
-        const url = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists';
-        const method = gistId ? 'PATCH' : 'POST';
-        const res = await fetch(url, {
-          method,
-          headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) throw new Error('Erro HTTP ' + res.status);
-        const data = await res.json();
-        if (data.id) {
-          document.getElementById('gistIdInput').value = data.id;
-          state.cloudConfig.gistId = data.id;
-          state.cloudConfig.gistToken = token;
-          safeSetStorage(STORAGE_KEYS.CLOUD_CFG, state.cloudConfig);
-          showToast('Carteira sincronizada no seu GitHub Gist privado!', 'success');
-        }
-      } catch (e) {
-        showToast('Não foi possível sincronizar com o Gist. Verifique o Token.', 'error');
-      }
-    }
-
-    async function pullFromGitHubGist() {
-      const token = document.getElementById('gistTokenInput').value.trim();
-      const gistId = document.getElementById('gistIdInput').value.trim();
-      if (!gistId) {
-        showToast('Informe o ID do Gist para baixar sua carteira.', 'error');
-        return;
-      }
-
-      try {
-        const headers = { 'Accept': 'application/vnd.github.v3+json' };
-        if (token) headers['Authorization'] = `token ${token}`;
-        const res = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
-        if (!res.ok) throw new Error('Erro ao buscar Gist');
-        const data = await res.json();
-        const file = data.files && data.files['tetoinvest_portfolio.json'];
-        if (file && file.content) {
-          const parsed = JSON.parse(file.content);
-          if (Array.isArray(parsed.stocks)) {
-            state.stocks = parsed.stocks;
-            if (parsed.globalDy) state.globalDy = Number(parsed.globalDy);
-            safeSetStorage(STORAGE_KEYS.PORTFOLIO, state.stocks);
-            renderAll();
-            showToast('Carteira restaurada do GitHub Gist com sucesso!', 'success');
-          }
-        }
-      } catch (e) {
-        showToast('Erro ao baixar dados do Gist. Verifique o ID e o Token.', 'error');
-      }
-    }
-
-    function exportPortfolioJson() {
-      const dataStr = JSON.stringify({
-        app: 'TetoInvest Pro',
-        exportedAt: new Date().toISOString(),
-        globalDy: state.globalDy,
-        stocks: state.stocks
-      }, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `tetoinvest-carteira-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast('Arquivo de backup (.json) exportado!', 'success');
     }
 
     // ---------------------------------------------------------
@@ -1893,6 +1782,11 @@
             document.getElementById('formDpa').value = Number(data.dpa).toFixed(2);
           } else if (data.dpa && !document.getElementById('formStockId').value) {
             document.getElementById('formDpa').value = Number(data.dpa).toFixed(2);
+          }
+          if (data.dpa12m && !document.getElementById('formDpa12m').value) {
+            document.getElementById('formDpa12m').value = Number(data.dpa12m).toFixed(2);
+          } else if (data.dpa12m && !document.getElementById('formStockId').value) {
+            document.getElementById('formDpa12m').value = Number(data.dpa12m).toFixed(2);
           }
           if (data.lpa && !document.getElementById('formStockId').value) {
             document.getElementById('formLpa').value = Number(data.lpa).toFixed(2);
@@ -2235,4 +2129,3 @@
   </script>
 </body>
 </html>
-```
